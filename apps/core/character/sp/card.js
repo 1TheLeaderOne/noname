@@ -1,6 +1,18 @@
 import { lib, game, ui, get, ai, _status } from "noname";
 
 const cards = {
+	// 螭纹玉佩
+	chiwenyupei: {
+		fullskin: true,
+		cardcolor: "diamond",
+		type: "equip",
+		subtype: "equip5",
+		skills: ["chiwenyupei"],
+		ai: {
+			equipValue: 5,
+			basic: { equipValue: 5 },
+		},
+	},
 	//曹婴三种类型
 	caoying_basic: {
 		fullskin: true,

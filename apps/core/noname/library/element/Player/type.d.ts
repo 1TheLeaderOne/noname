@@ -12,6 +12,18 @@ import type { Card, VCard, Player, Button, Dialog, GameEvent } from ".."
 export type BroadSelect = number | Select
 
 /**
+ * 可传进`get.filter`作为卡牌过滤参数的对象
+ */
+export interface CardFilter {
+	name?: string | string[];
+	type?: string | string[];
+	subtype?: string | string[];
+	color?: string | string[];
+	suit?: string | string[];
+	number?: string | string[];
+}
+
+/**
  * 
  */
 export interface CheckCardParams {
@@ -20,15 +32,15 @@ export interface CheckCardParams {
      * 
 	 * 直接填true，则有些地方，会优先触发过滤可使用的卡牌，例如ui.click.skill,ai.basic.chooseCard
 	 * 
-	 * 注：game.check时，如果当前时viewAs“视为技”，则其过滤技能时filterCard,作为方法，多入参一个event参数，需要时可以使用；
+	 * 注：game.check时，如果当前时viewAs“视为技”，则其过滤技能时filterCard；作为方法，多入参一个event参数，需要时可以使用；
 	 * （一般没有）
 	 * 
 	 * @param card - 选择的牌
 	 * @param player - 发起选择的玩家
-	 * @param event - 触发选择的事件，一般情况下可能不存在
+	 * @param event - 触发选择事件的名称，一般情况下可能不存在
 	 * @returns 牌是否符合条件
 	 */
-	filterCard?: boolean | ((card: Card, player: Player, event?: GameEvent) => boolean);
+	filterCard?: boolean | CardFilter | ((card: Card, player: Player, event?: string) => boolean);
 	
 	/**
 	 * 需要选择牌数量的范围
@@ -80,7 +92,7 @@ export interface CheckCardParams {
 	 * AI选择牌时的优先级评分函数
 	 * 
 	 * @param card - 选择的牌
-	 * @RETURNS 选择该牌的优先级评分
+	 * @returns 选择该牌的优先级评分
 	 */
 	ai?(card: Card): number;
 }
@@ -271,8 +283,10 @@ export interface EventChooseCooperationForParams {
 }
 
 export interface EventChooseToMoveParams extends ChooseBase {
+	list: any[];
 	forced?: boolean;
 	allowChooseAll?: boolean;
+	processAI?(list: any[]): any[] | false;
 }
 
 export type EventChooseToMoveNewParams = ChooseBase;
@@ -292,7 +306,7 @@ export interface EventChooseToUseParams extends ChooseBase, CheckCardTargetParam
 
 export interface EventChooseToRespondParams extends ChooseBase, CheckCardParams {
 	nosource?: boolean;
-	card?: VCard;
+	card?: CardBaseUIData;
 }
 
 export interface EventChooseToGiveParams extends ChooseBase, CheckCardParams {
@@ -338,11 +352,13 @@ export interface EventChooseButtonParams extends ChooseBase, CheckButtonParams {
 	direct?: boolean;
 	// TODO: 加类型
 	createDialog?: any[];
+
+	processAI?(): Partial<Result>;
 }
 
-export interface EventChooseCardOLParams {
-	list?: Player[];
-	args: any[];
+export interface EventChooseCardOLParams extends EventChooseCardParams {
+	list: Player[];
+	args?: any[];
 }
 
 export interface EventChooseCardParams extends ChooseBase, CheckCardParams {
@@ -415,14 +431,16 @@ export interface EventChoosePlayerCardParams extends ChooseBase, CheckButtonPara
 }
 
 export type EventDiscardPlayerCardParams = EventChoosePlayerCardParams;
-export type EventGainPlayerCardParams = EventChoosePlayerCardParams;
+export interface EventGainPlayerCardParams extends EventChoosePlayerCardParams {
+	visibleMove?: boolean;
+}
 
 export interface EventMoveCardParams extends ChooseBase {
 	sourceTargets?: Player[];
 	aimTargets?: Player[];
 	canReplace?: boolean;
 	targetprompt?: string[];
-	filter?(card: Card): boolean;
+	filter?(card: Card | VCard): boolean;
 }
 
 export interface EventUseCardParams {
@@ -511,6 +529,11 @@ export interface EventRandomGainParams {
 	 * 是否在获取时显示指示线
 	 */
 	line?: boolean;
+
+	/**
+	 * 获得牌时的动画表现，默认为 "giveAuto"
+	 */
+	animate?: GainAnimate;
 }
 
 export interface EventDiscardParams {
@@ -570,7 +593,7 @@ export interface EventRespondParams {
 export interface EventGainParams {
 	cards?: Card[];
 	source?: Player;
-	animate?: string;
+	animate?: GainAnimate;
 	gaintag?: string[];
 	log?: boolean;
 	areaNames?: string[];
@@ -583,7 +606,7 @@ export interface EventAddToExpansionParams {
 	cards?: Card[];
 	source?: Player;
 	gaintag?: string[];
-	animate?: string;
+	animate?: GainAnimate;
 	fromStorage?: boolean;
 	areaNames?: string[];
 	log?: boolean;
@@ -642,13 +665,20 @@ export interface EventJudgeParams {
 	clearArena?: boolean;
 	position?: HTMLDivElement | DocumentFragment;
 	judge?(card: Card): number;
-	judge2?(result: Partial<Result>): boolean;
+	judge2?(result: Partial<Result>): boolean | undefined;
 }
 
-// 一些不暴露的类型
+// 一些内部类型
 
-interface ChooseNumbersObject {
+export interface ChooseNumbersObject {
 	prompt: string;
 	min: number;
 	max: number;
 }
+
+/**
+ * 获取牌时可用的动画
+ *
+ * TODO: 补充每个动画的说明
+ */
+export type GainAnimate = "draw" | "gain" | "gain2" | "draw2" | "give" | "giveAuto" | ((event: GameEvent) => number | Promise<void>)
