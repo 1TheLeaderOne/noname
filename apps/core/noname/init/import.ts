@@ -47,7 +47,7 @@ export async function importMode(name: string) {
 		}
 	}
 	const alreadyModernMode = lib.config.moderned_modes || [];
-	const path = alreadyModernMode.includes(name) ? `/mode/${name}/index` : `/mode/${name}`;
+	const path = alreadyModernMode.includes(name) && import.meta.env.DEV ? `/mode/${name}/index` : `/mode/${name}`;
 	await importFunction("mode", path);
 }
 
@@ -108,7 +108,7 @@ export async function createEmptyExtension(name: string) {
 		config: {},
 		help: {},
 		package: {
-			translation : extensionInfo.translation,
+			translation: extensionInfo.translation,
 			nopack: true,
 			intro: extensionInfo.intro ? extensionInfo.intro.replace("${assetURL}", lib.assetURL) : "",
 			author: extensionInfo.author ?? "未知",

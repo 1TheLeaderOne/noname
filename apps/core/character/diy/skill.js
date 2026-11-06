@@ -4193,7 +4193,7 @@ const skills = {
 		},
 		silent: true,
 		forceDie: true,
-		content: () => {
+		async content(event, trigger, player) {
 			game.removeGlobalSkill("nslongyue_ai");
 		},
 	},
@@ -4377,7 +4377,7 @@ const skills = {
 				event.next.remove(next);
 				event.getParent("phase").after.push(next);
 				next.player = player;
-				next.setContent(function () {
+				next.setContent(async (event, trigger, player) => {
 					player.restoreSkill("nsxingchu");
 				});
 			}
